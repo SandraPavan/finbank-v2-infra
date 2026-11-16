@@ -52,6 +52,13 @@ services:
         condition: service_completed_successfully
     ports:
       - "127.0.0.1:${API_HOST_PORT:-13000}:3000"
+    healthcheck:
+      # Mesmo contrato HTTP de readiness: saudável somente com GET /health/ready → 200.
+      test: ["CMD", "node", "dist/healthcheck.js"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
     networks: [foundation]
     restart: unless-stopped
 
@@ -60,6 +67,13 @@ services:
       context: ../finbank-v2-web
     ports:
       - "127.0.0.1:${WEB_HOST_PORT:-18080}:8080"
+    healthcheck:
+      # Servindo o index do build estático.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
     networks: [foundation]
     restart: unless-stopped
 

@@ -26,13 +26,17 @@ Docker Engine com Compose v2 (verificado com Docker 29.7.2 e Compose v5.5.1). O 
 |---|---|---|---|
 | `postgres` | `postgres:18.6-alpine` | Banco com volume nomeado e healthcheck `pg_isready` | `127.0.0.1:15432` |
 | `migrate` | `../finbank-v2-api`, estágio `migrate` | Executa `prisma migrate deploy` uma vez e termina | — |
-| `api` | `../finbank-v2-api`, estágio `runtime` | NestJS (`node dist/main.js`), usuário sem root; sobe só depois do `migrate` terminar com sucesso | `127.0.0.1:13000` |
-| `web` | `../finbank-v2-web` | Build Vite servido por `nginxinc/nginx-unprivileged:1.30.6-alpine` | `127.0.0.1:18080` |
+| `api` | `../finbank-v2-api`, estágio `runtime` | NestJS (`node dist/main.js`), usuário sem root; sobe só depois do `migrate` terminar com sucesso; healthcheck pelo readiness | `127.0.0.1:13000` |
+| `web` | `../finbank-v2-web` | Build Vite servido por `nginxinc/nginx-unprivileged:1.30.6-alpine`; healthcheck pelo `index` | `127.0.0.1:18080` |
 
 - **Identidade:** projeto `finbank-v2`. Rede `finbank-v2_foundation`, volume `finbank-v2_postgres-data`, containers `finbank-v2-<serviço>-1`.
 - **Portas:** todas ligadas a `127.0.0.1` e configuráveis no `.env`.
 - **Volume:** no PostgreSQL 18, o volume é montado em `/var/lib/postgresql`, e os dados ficam em `/var/lib/postgresql/18/docker`.
-- **Healthchecks:** os de API e web, e o readiness, são escopo da DEV-005. Hoje a API só sobe depois de validar a conexão com o banco (fail-fast da DEV-003).
+- **Healthchecks (DEV-005):** os checks do Compose usam o mesmo contrato HTTP dos endpoints, e por isso `up --wait` só termina com a API realmente pronta.
+  - `api`: `node dist/healthcheck.js` só é saudável com `GET /health/ready` → 200. O contrato está no README da API.
+  - `web`: `wget` em `/`.
+  - Parâmetros técnicos (não são SLO): interval 5 s, timeout 3 s, retries 3, start_period 10 s (API) e 5 s (web).
+- **Banco cai depois da subida:** a API continua `running`, mas fica `unhealthy` (`/health/ready` → 503, `/health/live` → 200) e volta a `healthy` quando o banco retorna. O Compose não reinicia containers `unhealthy`; `restart: unless-stopped` age só quando o processo termina.
 
 ## Configuração (segredos fora do Git)
 
@@ -49,8 +53,9 @@ cp .env.example .env   # .env é ignorado pelo Git; troque os valores fictícios
 ```sh
 docker compose config --quiet          # valida a configuração
 docker compose up -d --build --wait    # constrói e sobe tudo
-docker compose ps -a                   # estado (migrate deve aparecer "Exited (0)")
-curl http://127.0.0.1:13000/health     # API → {"status":"ok"}
+docker compose ps -a                   # estado (api/web "healthy"; migrate "Exited (0)")
+curl http://127.0.0.1:13000/health/live    # API viva → {"status":"ok"}
+curl http://127.0.0.1:13000/health/ready   # API pronta → {"status":"ok","checks":{"database":"up"}} (503 se o banco cair)
 curl http://127.0.0.1:18080/           # web
 docker compose logs -f api             # logs
 scripts/down.sh                        # para e remove os containers, PRESERVANDO os dados
