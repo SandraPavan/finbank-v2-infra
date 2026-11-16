@@ -64,6 +64,14 @@ scripts/down.sh                        # para e remove os containers, PRESERVAND
 - **Dados preservados por padrão:** `scripts/down.sh` (ou `docker compose down`, sem `-v`) mantém o volume `finbank-v2_postgres-data`. O `down.sh` recusa `-v` e `--volumes`.
 - **Migrações:** são reaplicadas a cada `up`, de forma idempotente.
 
+## Verificação estática (DEV-007)
+
+```sh
+scripts/verify.sh   # compose config com .env.example (passa) e sem segredos (falha), bash -n e shellcheck (koalaman/shellcheck:v0.11.0 via Docker)
+```
+
+Não sobe containers nem toca volumes. Guia de qualidade: `../docs/quality.md`.
+
 ## Operação destrutiva (separada e explícita)
 
 ```sh
