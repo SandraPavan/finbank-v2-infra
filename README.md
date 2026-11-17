@@ -1,20 +1,26 @@
 # finbank-v2-infra
 
-Ambiente local da fundação do FinBank V2 (DEV-004): Docker Compose com PostgreSQL, migração, API e web. Documentação oficial, regras e histórias ficam na coordenação (`../_bmad-output/`, `../.claude/rules/`). Não há infraestrutura de produção, worker ou observabilidade nesta fase.
+Ambiente local da fundação do FinBank V2 (DEV-004): Docker Compose com PostgreSQL, migração, API e web. Este repositório é público. O ambiente completo precisa só dos repositórios públicos `finbank-v2-api` e `finbank-v2-web`. Não há infraestrutura de produção, worker ou observabilidade nesta fase.
 
 ## Convenção de checkout
 
-Os cinco repositórios ficam lado a lado, com a coordenação como pasta raiz. Cada pasta tem seu próprio Git:
+Os repositórios ficam lado a lado na mesma pasta, cada um com seu próprio Git:
 
 ```
-finbank-v2/                 # coordenação (finbank-v2-workspace)
-├── finbank-v2-api/         # build da API e da migração (contexto ../finbank-v2-api)
-├── finbank-v2-web/         # build do web (contexto ../finbank-v2-web)
-├── finbank-v2-infra/       # este repositório: compose.yaml
-└── finbank-v2-educational/
+<pasta>/
+├── finbank-v2-api/     # build da API e da migração (contexto ../finbank-v2-api)
+├── finbank-v2-web/     # build do web (contexto ../finbank-v2-web)
+└── finbank-v2-infra/   # este repositório: compose.yaml
 ```
 
-O `compose.yaml` referencia `../finbank-v2-api` e `../finbank-v2-web` explicitamente. Execute os comandos a partir de `finbank-v2-infra/`. Nenhum recurso do ambiente legado é usado.
+```sh
+mkdir finbank && cd finbank
+git clone <remoto>/finbank-v2-api.git
+git clone <remoto>/finbank-v2-web.git
+git clone <remoto>/finbank-v2-infra.git
+```
+
+O `compose.yaml` referencia `../finbank-v2-api` e `../finbank-v2-web` explicitamente. Execute os comandos a partir de `finbank-v2-infra/`. A equipe usa o mesmo arranjo dentro do workspace interno.
 
 ## Requisitos
 
@@ -70,7 +76,7 @@ scripts/down.sh                        # para e remove os containers, PRESERVAND
 scripts/verify.sh   # compose config com .env.example (passa) e sem segredos (falha), bash -n e shellcheck (koalaman/shellcheck:v0.11.0 via Docker)
 ```
 
-Não sobe containers nem toca volumes. Guia de qualidade: `../docs/quality.md`.
+Não sobe containers nem toca volumes.
 
 ## Operação destrutiva (separada e explícita)
 
