@@ -3,7 +3,10 @@
 # Segredos vêm de .env (fora do Git); veja .env.example.
 name: finbank-v2
 
-x-database-url: &database-url postgresql://${POSTGRES_USER:?defina POSTGRES_USER no .env}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/${POSTGRES_DB:?defina POSTGRES_DB no .env}
+# Dono do esquema: usado somente pelo serviço de migração (migrações e provisionamento).
+x-owner-database-url: &owner-database-url postgresql://${POSTGRES_USER:?defina POSTGRES_USER no .env}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/${POSTGRES_DB:?defina POSTGRES_DB no .env}
+# Usuário de execução (DEV-012): a API conecta com ele; sem posse de objetos e com privilégios mínimos.
+x-runtime-database-url: &runtime-database-url postgresql://${RUNTIME_DB_USER:?defina RUNTIME_DB_USER no .env}:${RUNTIME_DB_PASSWORD:?defina RUNTIME_DB_PASSWORD no .env}@postgres:5432/${POSTGRES_DB:?defina POSTGRES_DB no .env}
 
 services:
   postgres:
@@ -30,8 +33,11 @@ services:
     build:
       context: ../finbank-v2-api
       target: migrate
+    # Aplica as migrações e cria ou atualiza o usuário de execução (idempotente, a cada `up`).
     environment:
-      DATABASE_URL: *database-url
+      DATABASE_URL: *owner-database-url
+      RUNTIME_DB_USER: ${RUNTIME_DB_USER:?defina RUNTIME_DB_USER no .env}
+      RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD:?defina RUNTIME_DB_PASSWORD no .env}
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,7 +50,7 @@ services:
       target: runtime
     environment:
       PORT: "3000"
-      DATABASE_URL: *database-url
+      DATABASE_URL: *runtime-database-url
     depends_on:
       postgres:
         condition: service_healthy

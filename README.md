@@ -1,6 +1,6 @@
 # finbank-v2-infra
 
-Ambiente local da fundação do FinBank V2 (DEV-004): Docker Compose com PostgreSQL, migração, API e web. Este repositório é público. O ambiente completo precisa só dos repositórios públicos `finbank-v2-api` e `finbank-v2-web`. Não há infraestrutura de produção, worker ou observabilidade nesta fase.
+Ambiente local da fundação do FinBank V2 (DEV-004; papéis separados no banco na DEV-012): Docker Compose com PostgreSQL, migração, API e web. Este repositório é público. O ambiente completo precisa só dos repositórios públicos `finbank-v2-api` e `finbank-v2-web`. Não há infraestrutura de produção, worker ou observabilidade nesta fase.
 
 ## Convenção de checkout
 
@@ -50,8 +50,10 @@ Docker Engine com Compose v2 (verificado com Docker 29.7.2 e Compose v5.5.1). O 
 cp .env.example .env   # .env é ignorado pelo Git; troque os valores fictícios
 ```
 
-- **Obrigatórias:** `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_DB`. Se alguma faltar, `docker compose config` e `up` falham com a mensagem "defina … no .env".
-- **Senha e `DATABASE_URL`:** a `DATABASE_URL` da API e da migração é montada a partir dessas variáveis, apontando para o host interno `postgres`. Por isso, a senha deve usar só letras, dígitos, `-`, `_` e `.`.
+- **Obrigatórias:** `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `RUNTIME_DB_USER` e `RUNTIME_DB_PASSWORD`. Se alguma faltar, `docker compose config` e `up` falham com a mensagem "defina … no .env".
+- **Dois papéis no banco (DEV-012):** `POSTGRES_USER` é o dono do esquema e só o serviço `migrate` o usa. A API conecta com `RUNTIME_DB_USER`, um usuário sem posse de objetos e com privilégios mínimos (membro do papel `finbank_runtime`). A cada `up`, o `migrate` aplica as migrações e cria ou atualiza esse usuário com a senha do `.env` (idempotente; só o verificador SCRAM chega ao banco). `RUNTIME_DB_USER` deve ser diferente de `POSTGRES_USER`: 3 a 63 caracteres `a-z`, `0-9` ou `_`. `RUNTIME_DB_PASSWORD`: 16 a 128 caracteres.
+- **Senhas e `DATABASE_URL`:** as URLs do dono (migração) e do usuário de execução (API) são montadas a partir dessas variáveis, apontando para o host interno `postgres`. Por isso, as senhas devem usar só letras, dígitos, `-`, `_` e `.`.
+- **Ambiente existente:** quem já tem `.env` precisa acrescentar `RUNTIME_DB_USER` e `RUNTIME_DB_PASSWORD`; sem elas, `config` e `up` falham com a mensagem "defina … no .env". O volume de dados não é alterado: o próximo `up` cria o usuário de execução e concede os privilégios.
 - **Segredos fora das imagens:** nenhum segredo entra nas imagens. As variáveis são fornecidas só quando os containers rodam.
 
 ## Comandos
