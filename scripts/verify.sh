@@ -9,6 +9,17 @@ SHELLCHECK_IMAGE="koalaman/shellcheck:v0.11.0"
 echo "1/4 compose config com .env.example (deve passar)"
 docker compose --env-file .env.example config --quiet
 
+# O modo HTTP local só é aceitável com a API publicada apenas em loopback (DEV-017).
+resolved="$(docker compose --env-file .env.example config --format json)"
+if ! grep -q '"COOKIE_TRANSPORT": "local-http"' <<<"$resolved"; then
+  echo "erro: a API do Compose local deve declarar COOKIE_TRANSPORT=local-http" >&2
+  exit 1
+fi
+if [ "$(grep -c '"published":' <<<"$resolved")" != "$(grep -c '"host_ip": "127.0.0.1"' <<<"$resolved")" ]; then
+  echo "erro: toda porta publicada deve estar ligada a 127.0.0.1" >&2
+  exit 1
+fi
+
 echo "2/4 compose config sem segredos (deve falhar)"
 if env -u POSTGRES_USER -u POSTGRES_PASSWORD -u POSTGRES_DB -u RUNTIME_DB_USER -u RUNTIME_DB_PASSWORD \
   docker compose --env-file /dev/null config --quiet >/dev/null 2>&1; then
