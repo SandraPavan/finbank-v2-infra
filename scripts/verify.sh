@@ -20,6 +20,17 @@ if [ "$(grep -c '"published":' <<<"$resolved")" != "$(grep -c '"host_ip": "127.0
   exit 1
 fi
 
+# A linha de comando do operador só roda sob demanda (DEV-019).
+if docker compose --env-file .env.example config --services | grep -qx admin; then
+  echo "erro: o serviço admin não pode subir por padrão" >&2
+  exit 1
+fi
+with_admin="$(docker compose --env-file .env.example --profile admin config --format json)"
+if [ "$(grep -c '"published":' <<<"$with_admin")" != "$(grep -c '"published":' <<<"$resolved")" ]; then
+  echo "erro: o serviço admin não pode publicar portas" >&2
+  exit 1
+fi
+
 echo "2/4 compose config sem segredos (deve falhar)"
 if env -u POSTGRES_USER -u POSTGRES_PASSWORD -u POSTGRES_DB -u RUNTIME_DB_USER -u RUNTIME_DB_PASSWORD \
   docker compose --env-file /dev/null config --quiet >/dev/null 2>&1; then

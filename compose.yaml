@@ -70,6 +70,23 @@ services:
     networks: [foundation]
     restart: unless-stopped
 
+  # Linha de comando do operador (DEV-019): só sob demanda, por scripts/admin.sh. Não sobe com `up`,
+  # não publica porta e é o único serviço, além da migração, que conecta como dono do esquema.
+  admin:
+    profiles: [admin]
+    build:
+      context: ../finbank-v2-api
+      target: runtime
+    entrypoint: ["node", "dist/admin.js"]
+    command: []
+    environment:
+      DATABASE_URL: *owner-database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [foundation]
+    restart: "no"
+
   web:
     build:
       context: ../finbank-v2-web

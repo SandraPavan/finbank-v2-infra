@@ -57,6 +57,22 @@ cp .env.example .env   # .env é ignorado pelo Git; troque os valores fictícios
 - **Ambiente existente:** quem já tem `.env` precisa acrescentar `RUNTIME_DB_USER` e `RUNTIME_DB_PASSWORD`; sem elas, `config` e `up` falham com a mensagem "defina … no .env". O volume de dados não é alterado: o próximo `up` cria o usuário de execução e concede os privilégios.
 - **Segredos fora das imagens:** nenhum segredo entra nas imagens. As variáveis são fornecidas só quando os containers rodam.
 
+## Primeiro acesso (DEV-019)
+
+O `up` não cria identidades. Com o ambiente no ar, o operador (na instalação local, você) prepara o acesso:
+
+```sh
+scripts/admin.sh bootstrap --alias minha-turma --email facilitador@example.test       # workspace, facilitador e vínculo
+scripts/admin.sh customer create --alias minha-turma --email cliente@example.test     # cliente sintético, sem conta
+scripts/admin.sh                                                                      # lista os comandos
+```
+
+- **Senha:** digitada duas vezes, sem eco; para automação, uma linha na entrada padrão. Não há argumento nem variável para ela, e não existe senha padrão. 12 a 128 caracteres. Use dados fictícios.
+- **Repetir é seguro:** `bootstrap` não pede nem altera senha existente e não reverte facilitador desativado ou vínculo revogado.
+- **Ainda não há recuperação de senha:** quem a esquecer precisa de outra identidade.
+- **Códigos de saída:** 0 sucesso ou sem mudança; 1 falha; 2 uso ou entrada inválida; 3 já existe, não existe ou estado impede.
+- **Serviço `admin`:** conecta como dono do banco, só durante o comando; não sobe com `up` e não publica porta. Para outro projeto: `COMPOSE_ENV_FILES=/caminho/smoke.env scripts/admin.sh --project finbank-v2-smoke ...`.
+
 ## Comandos
 
 ```sh
