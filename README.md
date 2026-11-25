@@ -69,7 +69,7 @@ scripts/admin.sh                                                                
 
 - **Senha:** digitada duas vezes, sem eco; para automação, uma linha na entrada padrão. Não há argumento nem variável para ela, e não existe senha padrão. 12 a 128 caracteres. Use dados fictícios.
 - **Repetir é seguro:** `bootstrap` não pede nem altera senha existente e não reverte facilitador desativado ou vínculo revogado.
-- **Ainda não há recuperação de senha:** quem a esquecer precisa de outra identidade.
+- **Senha esquecida:** facilitador, `scripts/admin.sh facilitator reset --email ...`; cliente, pelo facilitador vinculado na API. A credencial temporária aparece uma única vez, vale 24 h e obriga a trocar a senha; a senha e as sessões anteriores deixam de valer na hora.
 - **Códigos de saída:** 0 sucesso ou sem mudança; 1 falha; 2 uso ou entrada inválida; 3 já existe, não existe ou estado impede.
 - **Serviço `admin`:** conecta como dono do banco, só durante o comando; não sobe com `up` e não publica porta. Para outro projeto: `COMPOSE_ENV_FILES=/caminho/smoke.env scripts/admin.sh --project finbank-v2-smoke ...`.
 
