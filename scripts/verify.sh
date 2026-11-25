@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 SHELLCHECK_IMAGE="koalaman/shellcheck:v0.11.0"
 
-echo "1/4 compose config com .env.example (deve passar)"
+echo "1/5 compose config com .env.example (deve passar)"
 docker compose --env-file .env.example config --quiet
 
 # O modo HTTP local só é aceitável com a API publicada apenas em loopback (DEV-017).
@@ -31,7 +31,7 @@ if [ "$(grep -c '"published":' <<<"$with_admin")" != "$(grep -c '"published":' <
   exit 1
 fi
 
-echo "2/4 compose config sem segredos (deve falhar)"
+echo "2/5 compose config sem segredos (deve falhar)"
 if env -u POSTGRES_USER -u POSTGRES_PASSWORD -u POSTGRES_DB -u RUNTIME_DB_USER -u RUNTIME_DB_PASSWORD \
   docker compose --env-file /dev/null config --quiet >/dev/null 2>&1; then
   echo "erro: compose config aceitou configuração sem segredos obrigatórios" >&2
@@ -47,16 +47,23 @@ if env -u RUNTIME_DB_USER -u RUNTIME_DB_PASSWORD \
   exit 1
 fi
 
-echo "3/4 sintaxe dos scripts (bash -n)"
+echo "3/5 sintaxe dos scripts (bash -n)"
 for script in scripts/*.sh; do
   bash -n "$script"
 done
 
-echo "4/4 shellcheck ($SHELLCHECK_IMAGE)"
+echo "4/5 shellcheck ($SHELLCHECK_IMAGE)"
 scripts_to_check=()
 for script in scripts/*.sh; do
   scripts_to_check+=("$(basename "$script")")
 done
 docker run --rm -v "$PWD/scripts:/mnt:ro" -w /mnt "$SHELLCHECK_IMAGE" "${scripts_to_check[@]}"
+
+echo "5/5 contrato web → API idêntico nos dois repositórios"
+pact="finbank-v2-web-finbank-v2-api.json"
+if ! cmp -s "../finbank-v2-web/pacts/$pact" "../finbank-v2-api/test/contract/pacts/$pact"; then
+  echo "erro: o pacto da web difere da cópia da API (copie finbank-v2-web/pacts/ para finbank-v2-api/test/contract/pacts/ e rode npm run test:contract na API)" >&2
+  exit 1
+fi
 
 echo "verificações do infra concluídas"

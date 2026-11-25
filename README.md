@@ -73,6 +73,12 @@ scripts/admin.sh                                                                
 - **Códigos de saída:** 0 sucesso ou sem mudança; 1 falha; 2 uso ou entrada inválida; 3 já existe, não existe ou estado impede.
 - **Serviço `admin`:** conecta como dono do banco, só durante o comando; não sobe com `up` e não publica porta. Para outro projeto: `COMPOSE_ENV_FILES=/caminho/smoke.env scripts/admin.sh --project finbank-v2-smoke ...`.
 
+## Web e API na mesma origem (DEV-021)
+
+Abra `http://127.0.0.1:18080`. O nginx do serviço `web` encaminha só `/api/` para `api:3000`, preservando o `Host` (exigido pelo modo HTTP local), e envia CSP restrita. A web sobe sem a API e mostra indisponibilidade enquanto ela faltar. Nada a acrescentar no `.env`. A porta da API continua disponível para automação.
+
+Jornada real no navegador, em projeto descartável (altera senhas): no `finbank-v2-web`, `npm run test:e2e:stack` com as variáveis `STACK_*` do README dele.
+
 ## Comandos
 
 ```sh
@@ -92,7 +98,7 @@ scripts/down.sh                        # para e remove os containers, PRESERVAND
 ## Verificação estática (DEV-007)
 
 ```sh
-scripts/verify.sh   # compose config com .env.example (passa) e sem segredos (falha), bash -n e shellcheck (koalaman/shellcheck:v0.11.0 via Docker)
+scripts/verify.sh   # contrato web → API idêntico nos dois repositórios, compose config com .env.example (passa) e sem segredos (falha), bash -n e shellcheck (koalaman/shellcheck:v0.11.0 via Docker)
 ```
 
 Não sobe containers nem toca volumes.
