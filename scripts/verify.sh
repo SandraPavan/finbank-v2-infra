@@ -15,6 +15,10 @@ if ! grep -q '"COOKIE_TRANSPORT": "local-http"' <<<"$resolved"; then
   echo "erro: a API do Compose local deve declarar COOKIE_TRANSPORT=local-http" >&2
   exit 1
 fi
+if ! grep -q '"FINBANK_ENVIRONMENT": "ISOLATED"' <<<"$resolved"; then
+  echo "erro: a API do Compose local deve declarar FINBANK_ENVIRONMENT=ISOLATED (só vale com portas em 127.0.0.1)" >&2
+  exit 1
+fi
 if [ "$(grep -c '"published":' <<<"$resolved")" != "$(grep -c '"host_ip": "127.0.0.1"' <<<"$resolved")" ]; then
   echo "erro: toda porta publicada deve estar ligada a 127.0.0.1" >&2
   exit 1

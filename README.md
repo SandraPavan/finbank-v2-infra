@@ -73,6 +73,10 @@ scripts/admin.sh                                                                
 - **Códigos de saída:** 0 sucesso ou sem mudança; 1 falha; 2 uso ou entrada inválida; 3 já existe, não existe ou estado impede.
 - **Serviço `admin`:** conecta como dono do banco, só durante o comando; não sobe com `up` e não publica porta. Para outro projeto: `COMPOSE_ENV_FILES=/caminho/smoke.env scripts/admin.sh --project finbank-v2-smoke ...`.
 
+## Ambiente educacional (DEV-023)
+
+O `compose.yaml` declara `FINBANK_ENVIRONMENT=ISOLATED` para a API: cada instância é de uma pessoa, porque as portas só existem em `127.0.0.1`. Isso permite, quando existirem, defeitos educacionais restritos a ambiente isolado. Uma instalação usada por várias pessoas precisa declarar `SHARED` (na API, a variável ausente já vale `SHARED`). O `verify.sh` exige `ISOLATED` junto com as portas em loopback.
+
 ## Web e API na mesma origem (DEV-021)
 
 Abra `http://127.0.0.1:18080`. O nginx do serviço `web` encaminha só `/api/` para `api:3000`, preservando o `Host` (exigido pelo modo HTTP local), e envia CSP restrita. A web sobe sem a API e mostra indisponibilidade enquanto ela faltar. Nada a acrescentar no `.env`. A porta da API continua disponível para automação.

@@ -53,6 +53,8 @@ services:
       DATABASE_URL: *runtime-database-url
       # HTTP só neste ambiente: a porta é publicada apenas em 127.0.0.1 (DEV-017).
       COOKIE_TRANSPORT: local-http
+      # Instância de uma pessoa só, publicada em 127.0.0.1 (DEV-023). Instalação compartilhada: SHARED.
+      FINBANK_ENVIRONMENT: ISOLATED
     depends_on:
       postgres:
         condition: service_healthy
